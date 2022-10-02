@@ -1,0 +1,14 @@
+DeviceBinding.nsmap
+MediaBinding.nsmap
+PullPointSubscriptionBinding.nsmap
+soapC.cpp
+soapDeviceBindingProxy.cpp
+soapDeviceBindingProxy.h
+soapH.h
+soapMediaBindingProxy.cpp
+soapMediaBindingProxy.h
+soapPullPointSubscriptionBindingProxy.cpp
+soapPullPointSubscriptionBindingProxy.h
+soapStub.h
+onvif.h
+CMakeLists.txt.user
