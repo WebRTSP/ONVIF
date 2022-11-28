@@ -6,9 +6,6 @@ find_package(PkgConfig REQUIRED)
 
 pkg_search_module(GSOAP REQUIRED gsoap++)
 
-file(GLOB_RECURSE WWW_ONVIF_ORG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    www.onvif.org/*)
-
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     README.md
     generate.sh
@@ -30,9 +27,6 @@ set(GENERATED
     onvif.h)
 
 add_custom_command(
-    DEPENDS www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl
-    DEPENDS www.onvif.org/ver10/media/wsdl/media.wsdl
-    DEPENDS www.onvif.org/ver10/events/wsdl/event.wsdl
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/DeviceBinding.nsmap
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/MediaBinding.nsmap
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/PullPointSubscriptionBinding.nsmap
@@ -50,7 +44,6 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(${PROJECT_NAME}
-    ${WWW_ONVIF_ORG}
     ${SOURCES}
     ${GENERATED})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)

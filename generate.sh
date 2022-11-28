@@ -15,9 +15,9 @@ fi
 # -ofile  output to file
 wsdl2h -c++11 -d -p -O4 -o onvif.h \
     ${PROXY} \
-    www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl \
-    www.onvif.org/ver10/media/wsdl/media.wsdl \
-    www.onvif.org/ver10/events/wsdl/event.wsdl
+    https://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl \
+    https://www.onvif.org/ver10/media/wsdl/media.wsdl \
+    https://www.onvif.org/ver10/events/wsdl/event.wsdl
 
 # -c++11 Generate C++ source code optimized for C++11 (compile with -std=c++11).
 # -2     Generate SOAP 1.2 source code.
