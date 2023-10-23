@@ -19,6 +19,16 @@ wsdl2h -c++11 -d -p -O4 -o onvif.h \
     https://www.onvif.org/ver10/media/wsdl/media.wsdl \
     https://www.onvif.org/ver10/events/wsdl/event.wsdl
 
+# from https://www.genivia.com/doc/wsse/html/wsse.html:
+# `#import "wsse.h"`
+# The wsdl2h tool adds the necessary import directives to the generated header file
+# if the WSDL declares the use of WS-Security.
+# If not, you may have to add the import directive shown above manually before running soapcpp2.
+cat >> onvif.h << EOL
+
+#import "wsse.h"
+EOL
+
 # -c++11 Generate C++ source code optimized for C++11 (compile with -std=c++11).
 # -2     Generate SOAP 1.2 source code.
 # -C     Generate client-side source code only.
