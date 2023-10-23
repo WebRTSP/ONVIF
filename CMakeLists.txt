@@ -48,7 +48,6 @@ add_library(${PROJECT_NAME}
     ${GENERATED})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${GSOAP_INCLUDE_DIRS}
-    ${GSOAP_SHARE_DIR})
+    ${GSOAP_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${GSOAP_LDFLAGS})
