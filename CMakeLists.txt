@@ -2,20 +2,40 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ONVIF)
 
-find_package(OpenSSL REQUIRED)
 find_package(PkgConfig REQUIRED)
+
+if(ANDROID)
+    include(FetchContent)
+    FetchContent_Declare(
+        android_openssl
+        DOWNLOAD_EXTRACT_TIMESTAMP true
+        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+    )
+    FetchContent_MakeAvailable(android_openssl)
+    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+else()
+    find_package(OpenSSL REQUIRED)
+endif()
 
 pkg_search_module(GSOAP REQUIRED gsoap++)
 pkg_search_module(GSOAP_SSL REQUIRED gsoapssl++)
 
+if(ANDROID)
+    set(PLATFORM_NO_CMAKE_FIND_ROOT_PATH "NO_CMAKE_FIND_ROOT_PATH")
+else()
+    set(PLATFORM_NO_CMAKE_FIND_ROOT_PATH "")
+endif()
+
 find_path(GSOAP_CUSTOM_DIR
     NAMES struct_timeval.h
     HINTS /usr/share/gsoap/custom
+    ${PLATFORM_NO_CMAKE_FIND_ROOT_PATH}
 )
 
 find_path(GSOAP_PLUGIN_DIR
     NAMES wsseapi.c
     HINTS /usr/share/gsoap/plugin
+    ${PLATFORM_NO_CMAKE_FIND_ROOT_PATH}
 )
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -101,5 +121,13 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC
         ${GSOAP_LDFLAGS}
         ${GSOAP_SSL_LDFLAGS}
-        ${OPENSSL_LIBRARIES}
 )
+
+if(ANDROID)
+    add_android_openssl_libraries(${PROJECT_NAME})
+else()
+    target_link_libraries(${PROJECT_NAME}
+        PUBLIC
+            ${OPENSSL_LIBRARIES}
+    )
+endif()
