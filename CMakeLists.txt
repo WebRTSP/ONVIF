@@ -2,7 +2,81 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ONVIF)
 
-find_package(PkgConfig REQUIRED)
+
+set(GSOAP_BIN_FILES
+    wsdl2h
+    soapcpp2
+)
+
+set(GSOAP_FILES
+    stdsoap2.h
+    stdsoap2.cpp
+    dom.cpp
+)
+
+set(GSOAP_CUSTOM_FILES
+    struct_timeval.h
+    struct_timeval.c
+)
+
+set(GSOAP_PLUGINS_FILES
+    wsaapi.h
+    wsaapi.c
+    wsseapi.h
+    wsseapi.c
+    wsddapi.h
+    wsddapi.c
+    smdevp.c
+    mecevp.c
+)
+
+if(ANDROID OR LINUX)
+    set(GSOAP_ROOT "${CMAKE_CURRENT_BINARY_DIR}/gSOAP")
+    set(GSOAP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.src")
+
+    foreach(GSOAP_BIN_FILE IN LISTS GSOAP_BIN_FILES)
+        list(APPEND GSOAP_BINARIES "${GSOAP_ROOT}/bin/${GSOAP_BIN_FILE}")
+    endforeach()
+
+    foreach(GSOAP_FILE IN LISTS GSOAP_FILES)
+        list(APPEND GSOAP_SOURCES "${GSOAP_SOURCE_DIR}/gsoap/${GSOAP_FILE}")
+    endforeach()
+
+    foreach(GSOAP_CUSTOM_FILE IN LISTS GSOAP_CUSTOM_FILES)
+        list(APPEND GSOAP_CUSTOM_SOURCES "${GSOAP_ROOT}/share/gsoap/custom/${GSOAP_CUSTOM_FILE}")
+    endforeach()
+
+    foreach(GSOAP_PLUGIN_FILE IN LISTS GSOAP_PLUGINS_FILES)
+        list(APPEND GSOAP_PLUGINS_SOURCES "${GSOAP_ROOT}/share/gsoap/plugin/${GSOAP_PLUGIN_FILE}")
+    endforeach()
+
+    foreach(GSOAP_FILE IN LISTS GSOAP_BINARIES GSOAP_SOURCES GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
+        if(NOT EXISTS ${GSOAP_FILE})
+            set(BUILD_GSOAP TRUE)
+        endif()
+    endforeach()
+
+    if(BUILD_GSOAP)
+        # 1. clean command erases all files marked as GENERATED
+        # 2. add_custom_command marks all OUTPUT files as GENERATED
+        # 3. add_library expects already existing files or marked as GENERATED
+        # so the only way I found to make everybody happy after clean
+        # is build gSOAP on cmake configure step with execute_process.
+        execute_process(
+            COMMAND
+                ${CMAKE_COMMAND}
+                -S "${CMAKE_CURRENT_SOURCE_DIR}/gSOAP"
+                -B "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.build"
+                "-DGSOAP_SOURCE_TARGET_DIR=${GSOAP_SOURCE_DIR}"
+                "-DCMAKE_INSTALL_PREFIX=${GSOAP_ROOT}"
+        )
+        execute_process(
+            COMMAND
+                ${CMAKE_COMMAND} --build
+                "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.build"
+        )
+    endif()
+endif()
 
 if(ANDROID)
     include(FetchContent)
@@ -17,45 +91,42 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-pkg_search_module(GSOAP REQUIRED gsoap++)
-pkg_search_module(GSOAP_SSL REQUIRED gsoapssl++)
+find_package(ZLIB REQUIRED)
+find_library(LIBM m REQUIRED)
 
-if(ANDROID)
-    set(PLATFORM_NO_CMAKE_FIND_ROOT_PATH "NO_CMAKE_FIND_ROOT_PATH")
-else()
-    set(PLATFORM_NO_CMAKE_FIND_ROOT_PATH "")
-endif()
-
-find_path(GSOAP_CUSTOM_DIR
-    NAMES struct_timeval.h
-    HINTS /usr/share/gsoap/custom
-    ${PLATFORM_NO_CMAKE_FIND_ROOT_PATH}
-)
-
-find_path(GSOAP_PLUGIN_DIR
-    NAMES wsseapi.c
-    HINTS /usr/share/gsoap/plugin
-    ${PLATFORM_NO_CMAKE_FIND_ROOT_PATH}
-)
-
-file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    README.md
+set(SOURCES
     generate.sh
     CMakeLists.txt
 )
 
-set(GSOAP_CUSTOM_SOURCES
-    ${GSOAP_CUSTOM_DIR}/struct_timeval.h
-    ${GSOAP_CUSTOM_DIR}/struct_timeval.c
+set(GSOAP_GENERATED_FILES
+    DeviceBinding.nsmap
+    MediaBinding.nsmap
+    PullPointSubscriptionBinding.nsmap
+    wsdd.nsmap
+    onvif.h
+    soapH.h
+    soapClient.cpp
+    soapStub.h
+    soapC.cpp
 )
 
-set(GSOAP_PLUGINS_SOURCES
-    ${GSOAP_PLUGIN_DIR}/wsaapi.h
-    ${GSOAP_PLUGIN_DIR}/wsaapi.c
-    ${GSOAP_PLUGIN_DIR}/wsseapi.h
-    ${GSOAP_PLUGIN_DIR}/wsseapi.c
-    ${GSOAP_PLUGIN_DIR}/smdevp.c
-    ${GSOAP_PLUGIN_DIR}/mecevp.c
+set(GSOAP_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/ONVIF")
+
+foreach(GENERATED_FILE IN LISTS GSOAP_GENERATED_FILES)
+    list(APPEND GSOAP_GENERATED_SOURCES "${GSOAP_GENERATED_DIR}/${GENERATED_FILE}")
+endforeach()
+
+add_custom_command(
+    DEPENDS ${GSOAP_BINARIES}
+    OUTPUT ${GSOAP_GENERATED_SOURCES}
+    COMMAND mkdir -p "${GSOAP_GENERATED_DIR}"
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        GSOAP_ROOT="${GSOAP_ROOT}"
+        --
+        "${CMAKE_CURRENT_SOURCE_DIR}/generate.sh" "${GSOAP_GENERATED_DIR}"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 foreach(SOURCE_FILE IN LISTS GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
@@ -65,62 +136,31 @@ foreach(SOURCE_FILE IN LISTS GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
     endif()
 endforeach()
 
-set(GENERATED
-    DeviceBinding.nsmap
-    MediaBinding.nsmap
-    PullPointSubscriptionBinding.nsmap
-    soapC.cpp
-    soapDeviceBindingProxy.cpp
-    soapDeviceBindingProxy.h
-    soapH.h
-    soapMediaBindingProxy.cpp
-    soapMediaBindingProxy.h
-    soapPullPointSubscriptionBindingProxy.cpp
-    soapPullPointSubscriptionBindingProxy.h
-    soapStub.h
-    onvif.h
-)
-
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/DeviceBinding.nsmap
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/MediaBinding.nsmap
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/PullPointSubscriptionBinding.nsmap
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapC.cpp
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapDeviceBindingProxy.cpp
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapDeviceBindingProxy.h
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapH.h
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapMediaBindingProxy.cpp
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapMediaBindingProxy.h
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapPullPointSubscriptionBindingProxy.cpp
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapPullPointSubscriptionBindingProxy.h
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/soapStub.h
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/onvif.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generate.sh
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
 add_library(${PROJECT_NAME}
     ${SOURCES}
+    ${GSOAP_SOURCES}
     ${GSOAP_CUSTOM_SOURCES}
     ${GSOAP_PLUGINS_SOURCES}
-    ${GENERATED}
+    ${GSOAP_GENERATED_SOURCES}
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_definitions(${PROJECT_NAME}
     PUBLIC
         WITH_OPENSSL
+        WITH_GZIP
         WITH_DOM
 )
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        ${GSOAP_INCLUDE_DIRS}
-        ${GSOAP_PLUGIN_DIR}/../../
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        "${GSOAP_SOURCE_DIR}"
+        "${GSOAP_SOURCE_DIR}/gsoap"
+        "${GSOAP_GENERATED_DIR}"
+        "${GSOAP_GENERATED_DIR}/../"
 )
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-        ${GSOAP_LDFLAGS}
-        ${GSOAP_SSL_LDFLAGS}
+        ZLIB::ZLIB
+        ${LIBM}
 )
 
 if(ANDROID)
