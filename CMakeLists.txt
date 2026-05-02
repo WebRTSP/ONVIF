@@ -96,6 +96,7 @@ find_library(LIBM m REQUIRED)
 
 set(SOURCES
     generate.sh
+    SOAP.h
     CMakeLists.txt
 )
 
