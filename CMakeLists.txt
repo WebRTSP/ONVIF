@@ -30,13 +30,22 @@ set(GSOAP_PLUGINS_FILES
     mecevp.c
 )
 
+set(GSOAP_GENERATED_FILES
+    DeviceBinding.nsmap
+    MediaBinding.nsmap
+    PullPointSubscriptionBinding.nsmap
+    wsdd.nsmap
+    onvif.h
+    soapH.h
+    soapClient.cpp
+    soapStub.h
+    soapC.cpp
+)
+
 if(ANDROID OR LINUX)
     set(GSOAP_ROOT "${CMAKE_CURRENT_BINARY_DIR}/gSOAP")
     set(GSOAP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.src")
-
-    foreach(GSOAP_BIN_FILE IN LISTS GSOAP_BIN_FILES)
-        list(APPEND GSOAP_BINARIES "${GSOAP_ROOT}/bin/${GSOAP_BIN_FILE}")
-    endforeach()
+    set(GSOAP_GENERATED_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
     foreach(GSOAP_FILE IN LISTS GSOAP_FILES)
         list(APPEND GSOAP_SOURCES "${GSOAP_SOURCE_DIR}/gsoap/${GSOAP_FILE}")
@@ -50,11 +59,33 @@ if(ANDROID OR LINUX)
         list(APPEND GSOAP_PLUGINS_SOURCES "${GSOAP_ROOT}/share/gsoap/plugin/${GSOAP_PLUGIN_FILE}")
     endforeach()
 
-    foreach(GSOAP_FILE IN LISTS GSOAP_BINARIES GSOAP_SOURCES GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
+    foreach(GENERATED_FILE IN LISTS GSOAP_GENERATED_FILES)
+        list(APPEND GSOAP_GENERATED_SOURCES "${GSOAP_GENERATED_DIR}/${GENERATED_FILE}")
+    endforeach()
+
+    foreach(GSOAP_BIN_FILE IN LISTS GSOAP_BIN_FILES)
+        list(APPEND GSOAP_BINARIES "${GSOAP_ROOT}/bin/${GSOAP_BIN_FILE}")
+    endforeach()
+
+    foreach(GSOAP_FILE IN LISTS GSOAP_SOURCES GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
         if(NOT EXISTS ${GSOAP_FILE})
             set(BUILD_GSOAP TRUE)
         endif()
     endforeach()
+
+    foreach(GSOAP_GENERATED_SOURCE IN LISTS GSOAP_GENERATED_SOURCES)
+        if(NOT EXISTS ${GSOAP_GENERATED_SOURCE})
+            set(GENERATE_FILES TRUE)
+        endif()
+    endforeach()
+
+    if(GENERATE_FILES)
+        foreach(GSOAP_FILE IN LISTS GSOAP_BINARIES)
+            if(NOT EXISTS ${GSOAP_FILE})
+                set(BUILD_GSOAP TRUE)
+            endif()
+        endforeach()
+    endif()
 
     if(BUILD_GSOAP)
         # 1. clean command erases all files marked as GENERATED
@@ -74,6 +105,18 @@ if(ANDROID OR LINUX)
             COMMAND
                 ${CMAKE_COMMAND} --build
                 "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.build"
+        )
+    endif()
+
+    if(GENERATE_FILES)
+        file(MAKE_DIRECTORY "${GSOAP_GENERATED_DIR}")
+
+        execute_process(
+            COMMAND
+                ${CMAKE_COMMAND} -E env
+                "GSOAP_ROOT=${GSOAP_ROOT}"
+                --
+                "${CMAKE_CURRENT_SOURCE_DIR}/generate.sh" "${GSOAP_GENERATED_DIR}"
         )
     endif()
 endif()
@@ -98,36 +141,6 @@ set(SOURCES
     generate.sh
     SOAP.h
     CMakeLists.txt
-)
-
-set(GSOAP_GENERATED_FILES
-    DeviceBinding.nsmap
-    MediaBinding.nsmap
-    PullPointSubscriptionBinding.nsmap
-    wsdd.nsmap
-    onvif.h
-    soapH.h
-    soapClient.cpp
-    soapStub.h
-    soapC.cpp
-)
-
-set(GSOAP_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/ONVIF")
-
-foreach(GENERATED_FILE IN LISTS GSOAP_GENERATED_FILES)
-    list(APPEND GSOAP_GENERATED_SOURCES "${GSOAP_GENERATED_DIR}/${GENERATED_FILE}")
-endforeach()
-
-add_custom_command(
-    DEPENDS ${GSOAP_BINARIES}
-    OUTPUT ${GSOAP_GENERATED_SOURCES}
-    COMMAND mkdir -p "${GSOAP_GENERATED_DIR}"
-    COMMAND
-        ${CMAKE_COMMAND} -E env
-        GSOAP_ROOT="${GSOAP_ROOT}"
-        --
-        "${CMAKE_CURRENT_SOURCE_DIR}/generate.sh" "${GSOAP_GENERATED_DIR}"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 foreach(SOURCE_FILE IN LISTS GSOAP_CUSTOM_SOURCES GSOAP_PLUGINS_SOURCES)
