@@ -30,11 +30,11 @@ fi
 # -p      create polymorphic types inherited from base xsd__anyType
 # -O4     optimize -O3 and omit unused schema root elements (use only with WSDLs)
 # -ofile  output to file
-${WSDL2H} -c++11 -d -p -O4 -o ${OUT_FILE} \
+(set -x; ${WSDL2H} -c++11 -d -p -O4 -o ${OUT_FILE} \
     ${PROXY} \
     https://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl \
     https://www.onvif.org/ver10/media/wsdl/media.wsdl \
-    https://www.onvif.org/ver10/events/wsdl/event.wsdl
+    https://www.onvif.org/ver10/events/wsdl/event.wsdl)
 
 # from https://www.genivia.com/doc/wsse/html/wsse.html:
 # `#import "wsse.h"`
@@ -55,4 +55,4 @@ EOL
 # -a     Use HTTP SOAPAction with WS-Addressing to invoke server-side operations.
 # -L     Do not generate soapClientLib/soapServerLib.
 # FIXME? recommended command from WS-Discovery plugin docs: soapcpp2 -a -L -pwsdd -Iimport import/wsdd.h
-${SOAPCPP2} -c++11 -2 -C -x -t -a -L ${GSOAP_I} ${OUT_FILE} ${OUT_DIR}
+(set -x; ${SOAPCPP2} -c++11 -2 -C -x -t -a -L ${GSOAP_I} ${OUT_FILE} ${OUT_DIR})
