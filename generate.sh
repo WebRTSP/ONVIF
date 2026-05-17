@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-if [[ -z "${http_proxy}" ]]; then
+if [[ -z "${https_proxy}" ]]; then
     PROXY=""
 else
-    PROXY=${http_proxy#"http://"}
+    PROXY=${https_proxy#"http://"}
     PROXY=-r${PROXY%"/"}
 fi
 
