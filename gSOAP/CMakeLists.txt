@@ -4,6 +4,7 @@ project(gSOAP)
 
 include(ExternalProject)
 
+file(REMOVE_RECURSE "${GSOAP_SOURCE_TARGET_DIR}")
 ExternalProject_Add(gSOAP
     URL https://downloads.sourceforge.net/project/gsoap2/gsoap_2.8.142.zip
     URL_HASH SHA1=86066ec72c35e335137606bcdc77c9b4d899d0a5

@@ -26,8 +26,12 @@ set(GSOAP_PLUGINS_FILES
     wsseapi.c
     wsddapi.h
     wsddapi.c
+    smdevp.h
     smdevp.c
+    mecevp.h
     mecevp.c
+    threads.h
+    threads.c
 )
 
 set(GSOAP_GENERATED_FILES
@@ -41,7 +45,7 @@ set(GSOAP_GENERATED_FILES
 
 if(ANDROID OR LINUX)
     set(GSOAP_ROOT "${CMAKE_CURRENT_BINARY_DIR}/gSOAP")
-    set(GSOAP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gSOAP.src")
+    set(GSOAP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gSOAP.src")
     set(GSOAP_GENERATED_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
     foreach(GSOAP_FILE IN LISTS GSOAP_FILES)
