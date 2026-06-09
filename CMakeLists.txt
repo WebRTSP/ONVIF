@@ -85,6 +85,8 @@ if(ANDROID OR LINUX)
                 set(BUILD_GSOAP TRUE)
             endif()
         endforeach()
+    elseif(BUILD_GSOAP)
+        set(GENERATE_FILES TRUE)
     endif()
 
     if(BUILD_GSOAP)
