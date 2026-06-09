@@ -115,7 +115,8 @@ if(ANDROID OR LINUX)
                 ${CMAKE_COMMAND} -E env
                 "GSOAP_ROOT=${GSOAP_ROOT}"
                 --
-                "${CMAKE_CURRENT_SOURCE_DIR}/generate.sh" "${GSOAP_GENERATED_DIR}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/generate.sh"
+            WORKING_DIRECTORY "${GSOAP_GENERATED_DIR}"
         )
     endif()
 endif()
