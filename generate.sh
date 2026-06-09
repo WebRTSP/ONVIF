@@ -7,13 +7,15 @@ else
     PROXY=-r${PROXY%"/"}
 fi
 
+OUT_FILE_BASE=onvif
+
 if [[ -z "$1" ]]; then
-    OUT_FILE=./onvif.h
-    OUT_DIR=
+    OUT_DIR=.
 else
-    OUT_FILE="$1/onvif.h"
-    OUT_DIR="-d $1"
+    OUT_DIR=$1
 fi
+
+OUT_FILE=${OUT_DIR}/${OUT_FILE_BASE}.h
 
 if [[ -z "${GSOAP_ROOT}" ]]; then
     GSOAP_I=""
@@ -30,7 +32,7 @@ fi
 # -p      create polymorphic types inherited from base xsd__anyType
 # -O4     optimize -O3 and omit unused schema root elements (use only with WSDLs)
 # -ofile  output to file
-(set -x; ${WSDL2H} -c++11 -d -p -O4 -o ${OUT_FILE} \
+(set -x; ${WSDL2H} -c++11 -d -p -O4 -o "${OUT_FILE}" \
     ${PROXY} \
     https://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl \
     https://www.onvif.org/ver10/media/wsdl/media.wsdl \
@@ -41,7 +43,7 @@ fi
 # The wsdl2h tool adds the necessary import directives to the generated header file
 # if the WSDL declares the use of WS-Security.
 # If not, you may have to add the import directive shown above manually before running soapcpp2.
-cat >> ${OUT_FILE} << EOL
+cat >> "${OUT_FILE}" << EOL
 
 #import "wsse.h"
 #import "wsdd5.h"
@@ -55,4 +57,9 @@ EOL
 # -a     Use HTTP SOAPAction with WS-Addressing to invoke server-side operations.
 # -L     Do not generate soapClientLib/soapServerLib.
 # FIXME? recommended command from WS-Discovery plugin docs: soapcpp2 -a -L -pwsdd -Iimport import/wsdd.h
-(set -x; ${SOAPCPP2} -c++11 -2 -C -x -t -a -L ${GSOAP_I} ${OUT_FILE} ${OUT_DIR})
+(set -x; ${SOAPCPP2} -c++11 -2 -C -x -t -a -L ${GSOAP_I} -d "${OUT_DIR}" "${OUT_FILE}")
+
+mv "${OUT_DIR}/DeviceBinding.nsmap" "${OUT_DIR}/${OUT_FILE_BASE}.nsmap"
+rm -f "${OUT_DIR}/MediaBinding.nsmap"
+rm -f "${OUT_DIR}/PullPointSubscriptionBinding.nsmap"
+rm -f "${OUT_DIR}/wsdd.nsmap"

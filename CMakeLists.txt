@@ -31,11 +31,8 @@ set(GSOAP_PLUGINS_FILES
 )
 
 set(GSOAP_GENERATED_FILES
-    DeviceBinding.nsmap
-    MediaBinding.nsmap
-    PullPointSubscriptionBinding.nsmap
-    wsdd.nsmap
     onvif.h
+    onvif.nsmap
     soapH.h
     soapClient.cpp
     soapStub.h
