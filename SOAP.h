@@ -4,22 +4,22 @@
 
 struct SOAP
 {
-    SOAP(soap_mode mode = SOAP_IO_DEFAULT) {
+    SOAP(soap_mode mode = SOAP_IO_DEFAULT) noexcept {
         soap_init1(&_soap, mode);
     }
 
     SOAP& operator = (SOAP&) = delete;
 
-    ~SOAP() {
+    ~SOAP() noexcept {
         soap_destroy(&_soap);
         soap_end(&_soap);
         soap_done(&_soap);
     }
 
-    struct soap* operator -> () {
+    struct soap* operator -> () noexcept {
         return &_soap;
     }
-    operator struct soap* () {
+    operator struct soap* () noexcept {
         return &_soap;
     }
 
