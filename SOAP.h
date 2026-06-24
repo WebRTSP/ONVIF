@@ -4,10 +4,7 @@
 
 struct SOAP
 {
-    SOAP() {
-        soap_init(&_soap);
-    }
-    SOAP(soap_mode mode) {
+    SOAP(soap_mode mode = SOAP_IO_DEFAULT) {
         soap_init1(&_soap, mode);
     }
 
