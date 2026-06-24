@@ -2,14 +2,11 @@
 
 #include "stdsoap2.h"
 
-struct SOAP
-{
+struct SOAP {
     SOAP(soap_mode mode = SOAP_IO_DEFAULT) noexcept {
         soap_init1(&_soap, mode);
     }
-
     SOAP& operator = (SOAP&) = delete;
-
     ~SOAP() noexcept {
         soap_destroy(&_soap);
         soap_end(&_soap);
