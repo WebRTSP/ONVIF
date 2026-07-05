@@ -167,6 +167,7 @@ target_compile_definitions(${PROJECT_NAME}
         WITH_OPENSSL
         WITH_GZIP
         WITH_DOM
+        WITH_SELF_PIPE
 )
 target_include_directories(${PROJECT_NAME}
     PUBLIC
