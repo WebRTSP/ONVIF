@@ -126,14 +126,18 @@ if(ANDROID OR LINUX)
 endif()
 
 if(ANDROID)
-    include(FetchContent)
-    FetchContent_Declare(
-        android_openssl
-        DOWNLOAD_EXTRACT_TIMESTAMP true
-        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
-    )
-    FetchContent_MakeAvailable(android_openssl)
-    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+    if(NOT OPENSSL_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(
+            android_openssl
+            DOWNLOAD_EXTRACT_TIMESTAMP true
+            URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+        )
+        FetchContent_MakeAvailable(android_openssl)
+        include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+
+        set(KDAB_OPENSSL_USED YES)
+    endif()
 else()
     find_package(OpenSSL REQUIRED)
 endif()
@@ -183,7 +187,14 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if(ANDROID)
-    add_android_openssl_libraries(${PROJECT_NAME})
+    if(KDAB_OPENSSL_USED)
+        add_android_openssl_libraries(${PROJECT_NAME})
+    else()
+        target_link_libraries(${PROJECT_NAME}
+            PUBLIC
+                ${OPENSSL_STATIC_LIBRARIES}
+        )
+    endif()
 else()
     target_link_libraries(${PROJECT_NAME}
         PUBLIC
